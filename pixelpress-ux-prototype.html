@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>PixelPress — Zero Backend Build</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#f5f6f3, #111410);
+    --surface: light-dark(#ffffff, #1a1e19);
+    --surface-2: light-dark(#f0f2ed, #222720);
+    --surface-3: light-dark(#e7eae3, #2a3028);
+    --text: light-dark(#172018, #f2f5ef);
+    --muted: light-dark(#677166, #a7b0a2);
+    --line: light-dark(#dfe4dc, #343b32);
+    --accent: #c9f56b;
+    --accent-ink: #1b2810;
+    --danger: light-dark(#b9382e, #ff8e84);
+    --success: light-dark(#23764a, #81d6a3);
+    --shadow: 0 18px 50px rgba(17, 27, 16, .08);
+    --radius: 20px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  button, input, select { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 3px solid #6a9e2a; outline-offset: 3px; }
+  .app { min-height: 100vh; background: var(--bg); }
+  .topbar { height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 22px; max-width: 1440px; margin: 0 auto; padding: 0 42px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: inherit; min-width: 230px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-size: 22px; font-weight: 900; box-shadow: inset 0 0 0 1px rgba(20,40,8,.08); }
+  .brand-name { font-size: 19px; font-weight: 820; letter-spacing: -.7px; }
+  .brand-sub { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1.6px; color: var(--muted); font-weight: 700; margin-top: -2px; }
+  .nav { display: flex; align-items: center; gap: 26px; color: var(--muted); }
+  .nav button { border: 0; background: transparent; padding: 8px 0; color: inherit; font-weight: 600; }
+  .nav button:hover { color: var(--text); }
+  .local-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; color: var(--muted); }
+  .green-dot { width: 7px; height: 7px; border-radius: 50%; background: #6cc779; box-shadow: 0 0 0 3px rgba(108,199,121,.13); }
+  .main { max-width: 1440px; padding: 0 42px 38px; margin: 0 auto; }
+  .intro { max-width: 870px; margin: 0 auto; text-align: center; padding: 60px 15px 30px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 1.7px; text-transform: uppercase; }
+  .eyebrow-line { width: 22px; height: 1px; background: var(--muted); opacity: .7; }
+  h1 { font-size: clamp(38px, 5vw, 63px); letter-spacing: -3.3px; line-height: 1.01; max-width: 800px; margin: 18px auto 18px; font-weight: 850; }
+  .highlight { position: relative; display: inline-block; z-index: 0; white-space: nowrap; }
+  .highlight:after { content: ""; position: absolute; left: 0; bottom: 5px; height: 15px; width: 100%; background: var(--accent); z-index: -1; opacity: .85; transform: rotate(-1deg); }
+  .intro p { max-width: 630px; font-size: 16px; color: var(--muted); margin: 0 auto; }
+  .trust-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 25px; margin-top: 26px; color: var(--muted); font-size: 12px; font-weight: 650; }
+  .trust-item { display: flex; align-items: center; gap: 7px; }
+  .trust-item svg { width: 15px; height: 15px; color: #4f8a3b; flex: 0 0 auto; }
+  .upload-card { max-width: 900px; margin: 0 auto 24px; padding: 26px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow); }
+  .dropzone { min-height: 240px; border: 1.5px dashed light-dark(#bdc8b6, #4a5544); border-radius: 17px; background: light-dark(#fbfcf9, #20251e); display: flex; align-items: center; justify-content: center; text-align: center; padding: 28px; transition: border-color .16s, background .16s, transform .16s; }
+  .dropzone.dragover { border-color: #78a939; background: light-dark(#f1f9e7, #2d3922); transform: scale(.995); }
+  .upload-content { max-width: 490px; }
+  .upload-icon { width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 17px; background: var(--accent); color: var(--accent-ink); }
+  .upload-icon svg { width: 25px; height: 25px; }
+  .dropzone h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: -.45px; }
+  .dropzone p { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
+  .button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 43px; padding: 0 17px; border-radius: 12px; border: 1px solid transparent; font-weight: 760; transition: transform .15s, background .15s, border-color .15s; }
+  .button:hover { transform: translateY(-1px); }
+  .button-primary { background: var(--accent); color: var(--accent-ink); }
+  .button-primary:hover { background: #b9e859; }
+  .button-secondary { border-color: var(--line); background: var(--surface); color: var(--text); }
+  .button-secondary:hover { background: var(--surface-2); }
+  .button-quiet { background: transparent; color: var(--muted); border-color: transparent; padding-left: 10px; padding-right: 10px; }
+  .button-quiet:hover { background: var(--surface-2); color: var(--text); }
+  .button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .formats { text-align: center; margin-top: 14px; color: var(--muted); font-size: 11px; }
+  .formats strong { color: var(--text); font-weight: 750; }
+  .keyboard-note { display: block; margin-top: 7px; font-size: 11px; }
+  .hidden { display: none !important; }
+  .workspace { margin-top: 28px; }
+  .workspace-top { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 22px 0 18px; }
+  .workspace-title { margin: 0; font-size: 27px; letter-spacing: -1.1px; }
+  .workspace-desc { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .toolbar .button { min-height: 38px; padding: 0 13px; font-size: 12px; border-radius: 10px; }
+  .workspace-grid { display: grid; grid-template-columns: minmax(220px, 260px) minmax(350px, 1fr) minmax(240px, 290px); gap: 16px; align-items: stretch; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 17px 18px; border-bottom: 1px solid var(--line); }
+  .panel-title { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: -.1px; }
+  .panel-kicker { color: var(--muted); font-size: 11px; }
+  .queue-list { padding: 9px; display: flex; flex-direction: column; gap: 5px; max-height: 545px; overflow: auto; }
+  .queue-item { display: grid; grid-template-columns: 50px minmax(0,1fr) 30px; align-items: center; gap: 10px; padding: 9px; background: transparent; border: 1px solid transparent; border-radius: 12px; text-align: left; color: var(--text); min-width: 0; }
+  .queue-item:hover { background: var(--surface-2); }
+  .queue-item.active { background: light-dark(#f0f8e8, #293322); border-color: light-dark(#d6e8c2, #465538); }
+  .queue-select { grid-column: 1 / 3; display: grid; grid-template-columns: 50px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 8px; text-align: left; background: transparent; color: inherit; }
+  .queue-select:hover { background: transparent; }
+  .queue-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: var(--surface-3); }
+  .queue-meta { min-width: 0; }
+  .queue-name { display: block; font-size: 11px; font-weight: 750; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .queue-size { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
+  .queue-status { display: inline-block; font-size: 9px; font-weight: 800; color: var(--muted); margin-top: 3px; }
+  .queue-status.done { color: var(--success); }
+  .queue-status.error { color: var(--danger); }
+  .icon-button { width: 29px; height: 29px; border-radius: 8px; background: transparent; color: var(--muted); border: 0; display: grid; place-items: center; }
+  .icon-button:hover { background: var(--surface-3); color: var(--text); }
+  .icon-button svg { width: 15px; height: 15px; }
+  .preview-panel { display: flex; flex-direction: column; }
+  .preview-head-actions { display: flex; align-items: center; gap: 7px; }
+  .mini-select { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 8px; font-size: 11px; }
+  .preview-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; align-items: start; }
+  .preview-side { min-width: 0; }
+  .preview-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 780; margin: 0 0 9px; }
+  .preview-label small { color: var(--muted); font-weight: 600; font-size: 10px; }
+  .image-stage { height: clamp(190px, 25vw, 315px); min-height: 185px; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; display: grid; place-items: center; background-color: light-dark(#f7f8f4, #222720); background-image: linear-gradient(45deg, light-dark(#e8ece5, #2b3129) 25%, transparent 25%), linear-gradient(-45deg, light-dark(#e8ece5, #2b3129) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, light-dark(#e8ece5, #2b3129) 75%), linear-gradient(-45deg, transparent 75%, light-dark(#e8ece5, #2b3129) 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+  .image-stage img { display: block; width: 100%; height: 100%; max-height: 315px; object-fit: contain; }
+  .empty-preview { padding: 18px; text-align: center; color: var(--muted); max-width: 180px; font-size: 12px; }
+  .empty-preview strong { color: var(--text); display: block; margin-bottom: 5px; }
+  .preview-foot { padding: 11px 16px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 11px; }
+  .result-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 7px; color: var(--success); background: light-dark(#edf8ee, #203329); font-size: 10px; font-weight: 800; }
+  .settings-body { padding: 17px; }
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .field label, .field .label { font-size: 12px; font-weight: 780; }
+  .field-help { color: var(--muted); font-size: 10px; margin-top: 6px; }
+  select.control, input.control { width: 100%; min-height: 40px; padding: 0 11px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); color: var(--text); outline-offset: 2px; }
+  input[type=range] { accent-color: #759f37; width: 100%; margin: 7px 0 0; }
+  .range-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
+  .quality-value { font-size: 12px; font-weight: 800; background: var(--surface-2); padding: 3px 7px; border-radius: 6px; }
+  .switch-row { display: flex; gap: 10px; align-items: flex-start; }
+  .switch-row input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: #719b35; flex: 0 0 auto; }
+  .switch-copy { min-width: 0; }
+  .switch-copy strong { display: block; font-size: 12px; }
+  .switch-copy small { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
+  .resize-wrap { margin-top: 12px; }
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  input[type=color] { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); width: 42px; height: 36px; padding: 3px; }
+  .settings-divider { height: 1px; background: var(--line); margin: 19px 0; }
+  .engine-note { display: flex; gap: 9px; background: var(--surface-2); border-radius: 12px; padding: 11px; color: var(--muted); font-size: 10px; }
+  .engine-note svg { width: 16px; height: 16px; flex: 0 0 auto; color: #648d35; }
+  .actionbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 16px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 8px 28px rgba(20,25,20,.04); }
+  .action-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 18px; }
+  .summary-cell strong { display: block; font-size: 15px; letter-spacing: -.3px; }
+  .summary-cell span { display: block; font-size: 10px; color: var(--muted); }
+  .action-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .action-buttons .button { min-height: 43px; }
+  .progress-wrap { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 13px; padding: 12px 15px; }
+  .progress-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; font-size: 11px; font-weight: 700; }
+  .progress-track { height: 5px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+  .progress-bar { height: 100%; width: 0; background: #88b947; transition: width .15s; }
+  .footnote { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1440px; padding: 24px 42px 32px; margin: 0 auto; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+  .foot-links { display: flex; gap: 18px; flex-wrap: wrap; }
+  .foot-links button { background: none; border: 0; color: inherit; padding: 0; font-size: inherit; }
+  .foot-links button:hover { color: var(--text); text-decoration: underline; }
+  .toast { position: fixed; right: 22px; bottom: 22px; max-width: min(420px, calc(100vw - 32px)); z-index: 20; background: light-dark(#182219, #eef5e9); color: light-dark(#fff, #182219); border-radius: 12px; padding: 13px 15px; box-shadow: 0 14px 40px rgba(0,0,0,.2); font-size: 12px; font-weight: 650; transform: translateY(20px); opacity: 0; pointer-events: none; transition: .2s ease; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .modal-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 18px; background: rgba(8,12,7,.55); backdrop-filter: blur(5px); }
+  .modal { width: min(520px, 100%); padding: 25px; border-radius: 22px; background: var(--surface); color: var(--text); box-shadow: 0 25px 80px rgba(0,0,0,.28); }
+  .modal-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+  .modal h2 { margin: 0; font-size: 23px; letter-spacing: -.7px; }
+  .modal p { color: var(--muted); font-size: 13px; margin: 12px 0; }
+  .modal ul { padding-left: 18px; color: var(--muted); font-size: 12px; }
+  .modal li { margin: 8px 0; }
+  .modal-close { background: var(--surface-2); border: 1px solid var(--line); color: var(--text); border-radius: 9px; width: 34px; height: 34px; font-size: 20px; }
+  .tag { display: inline-flex; padding: 4px 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); font-size: 10px; font-weight: 800; color: var(--muted); }
+  @media (max-width: 1100px) {
+    .topbar, .main, .footnote { padding-left: 24px; padding-right: 24px; }
+    .workspace-grid { grid-template-columns: 225px minmax(0,1fr); }
+    .settings-panel { grid-column: 1 / -1; }
+    .settings-body { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 22px; align-items: start; }
+    .settings-body > .field { margin: 0; }
+    .settings-body > .settings-divider { display: none; }
+    .engine-note { grid-column: 1 / -1; }
+  }
+  @media (max-width: 720px) {
+    .topbar { height: 66px; padding: 0 16px; }
+    .brand { min-width: 0; }
+    .brand-name { font-size: 17px; }
+    .brand-mark { width: 34px; height: 34px; }
+    .nav { gap: 13px; }
+    .nav button { font-size: 11px; }
+    .nav .local-badge { display: none; }
+    .main { padding: 0 14px 26px; }
+    .intro { padding: 42px 6px 23px; }
+    h1 { font-size: clamp(36px, 10vw, 49px); letter-spacing: -2.3px; }
+    .intro p { font-size: 14px; }
+    .trust-row { gap: 9px 14px; font-size: 10px; }
+    .upload-card { padding: 12px; border-radius: 18px; }
+    .dropzone { min-height: 230px; padding: 21px 13px; }
+    .dropzone h2 { font-size: 18px; }
+    .workspace-top { align-items: start; margin-top: 22px; }
+    .workspace-title { font-size: 24px; }
+    .toolbar { width: 100%; }
+    .workspace-grid { grid-template-columns: minmax(0,1fr); gap: 12px; }
+    .queue-list { max-height: 230px; display: grid; grid-template-columns: repeat(auto-fill,minmax(210px,1fr)); }
+    .settings-panel { grid-column: auto; }
+    .settings-body { display: block; padding: 15px; }
+    .settings-body > .field { margin-bottom: 18px; }
+    .settings-body > .field:last-of-type { margin-bottom: 0; }
+    .preview-grid { grid-template-columns: minmax(0,1fr); gap: 15px; }
+    .image-stage { height: 245px; }
+    .actionbar { align-items: stretch; flex-direction: column; padding: 14px; }
+    .action-buttons { justify-content: stretch; }
+    .action-buttons .button { flex: 1 1 auto; }
+    .footnote { padding: 21px 16px 25px; flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="PixelPress home">
+      <span class="brand-mark" aria-hidden="true">P.</span>
+      <span><span class="brand-name">pixelpress</span><span class="brand-sub">Zero Backend Build · 01</span></span>
+    </a>
+    <nav class="nav" aria-label="Main navigation">
+      <button type="button" id="howBtn">How it works</button>
+      <button type="button" id="privacyBtn">Privacy</button>
+      <button type="button" id="themeBtn" aria-label="Toggle color theme">◐</button>
+      <span class="local-badge"><span class="green-dot"></span> Runs in your browser</span>
+    </nav>
+  </header>
+
+  <main class="main" id="top">
+    <section class="intro" id="intro">
+      <div class="eyebrow"><span class="eyebrow-line"></span> Less weight. More control. <span class="eyebrow-line"></span></div>
+      <h1>Make images smaller.<br><span class="highlight">Keep the control.</span></h1>
+      <p>Compress and convert images right on your device. No account, no uploads, no waiting on a server.</p>
+      <div class="trust-row" aria-label="Product benefits">
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg> Files stay on your device</span>
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg> Batch-ready workflow</span>
+        <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v4M12 17v4M3 12h4m10 0h4M5.6 5.6l2.8 2.8m7.2 7.2 2.8 2.8m0-12.8-2.8 2.8m-7.2 7.2-2.8 2.8"/><circle cx="12" cy="12" r="4"/></svg> Adjustable quality</span>
+      </div>
+    </section>
+
+    <section class="upload-card" id="uploadCard" aria-label="Upload images">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose images or drop files here">
+        <div class="upload-content">
+          <div class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m-5 5 5-5 5 5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></div>
+          <h2>Drop images here to get started</h2>
+          <p>Choose one image or a batch. We’ll show you the original, settings, and result side by side.</p>
+          <button class="button button-primary" type="button" id="chooseBtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Choose images</button>
+          <span class="keyboard-note">or press Enter to browse · Max 10 files · 20 MB each · 30 MP</span>
+        </div>
+      </div>
+      <div class="formats">Supported input: <strong>JPG · PNG · WebP</strong> <span>—</span> no files leave this browser tab.</div>
+    </section>
+
+    <section class="workspace hidden" id="workspace" aria-label="Image compression workspace">
+      <div class="workspace-top">
+        <div><div class="eyebrow"><span class="eyebrow-line"></span> Image workspace</div><h2 class="workspace-title">Your images, under control.</h2><p class="workspace-desc" id="workspaceDesc">Tune output, inspect the result, then download.</p></div>
+        <div class="toolbar">
+          <button type="button" class="button button-secondary" id="addMoreBtn">＋ Add images</button>
+          <button type="button" class="button button-quiet" id="clearBtn">Clear all</button>
+        </div>
+      </div>
+      <div class="workspace-grid">
+        <section class="panel queue-panel" aria-label="Image queue">
+          <div class="panel-head"><h3 class="panel-title">File queue</h3><span class="panel-kicker" id="queueCount">0 files</span></div>
+          <div class="queue-list" id="queueList" role="list"></div>
+        </section>
+
+        <section class="panel preview-panel" aria-label="Original and compressed preview">
+          <div class="panel-head"><h3 class="panel-title">Compare output</h3><div class="preview-head-actions"><span class="tag" id="previewFormat">WEBP</span></div></div>
+          <div class="preview-grid">
+            <div class="preview-side"><div class="preview-label"><span>Original</span><small id="originalMeta">—</small></div><div class="image-stage" id="originalStage"><div class="empty-preview"><strong>Choose an image</strong>The original preview appears here.</div></div></div>
+            <div class="preview-side"><div class="preview-label"><span>Compressed</span><small id="outputMeta">Not ready</small></div><div class="image-stage" id="outputStage"><div class="empty-preview"><strong>Your result</strong>Run compression to see the output.</div></div></div>
+          </div>
+          <div class="preview-foot"><span id="previewMessage">Select a file in the queue to inspect it.</span><span id="previewSavings"></span></div>
+        </section>
+
+        <aside class="panel settings-panel" aria-label="Compression settings">
+          <div class="panel-head"><h3 class="panel-title">Output settings</h3><span class="panel-kicker">Local</span></div>
+          <div class="settings-body">
+            <div class="field">
+              <div class="field-label-row"><label for="formatSelect">Output format</label></div>
+              <select class="control" id="formatSelect"><option value="image/webp" selected>WebP · smaller files</option><option value="image/jpeg">JPEG · photo friendly</option><option value="image/png">PNG · lossless</option></select>
+              <div class="field-help">WebP is the default; verify target-platform compatibility before publishing.</div>
+            </div>
+            <div class="field" id="qualityField">
+              <div class="field-label-row"><label for="qualityRange">Image quality</label><span class="quality-value" id="qualityValue">82%</span></div>
+              <input type="range" id="qualityRange" min="35" max="100" value="82" step="1" aria-describedby="qualityHelp">
+              <div class="range-labels"><span>Smaller file</span><span>Higher quality</span></div>
+              <div class="field-help" id="qualityHelp">A balanced starting point. Review visual detail before saving.</div>
+            </div>
+            <div class="field">
+              <div class="switch-row"><input type="checkbox" id="resizeToggle"><span class="switch-copy"><strong>Resize output</strong><small>Limit the longest edge and keep proportions.</small></span></div>
+              <div class="resize-wrap hidden" id="resizeWrap"><label for="maxDimension" class="field-help" style="display:block;margin:10px 0 6px">Maximum edge (pixels)</label><input class="control" type="number" id="maxDimension" value="1920" min="64" max="12000" step="1"><div class="field-help">Example: 1920 keeps images suitable for many web uses.</div></div>
+            </div>
+            <div class="field hidden" id="matteField">
+              <div class="field-label-row"><label for="matteColor">JPEG background</label></div>
+              <div class="color-row"><input type="color" id="matteColor" value="#ffffff" aria-label="JPEG background color"><span class="field-help">JPEG has no transparency. Transparent areas use this color.</span></div>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="engine-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg><span><strong style="color:var(--text)">Privacy by design.</strong> This prototype processes selected images in this tab. It makes no image-upload requests. Browser encoders have different limits; output size may sometimes increase.</span></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="actionbar">
+        <div class="action-summary" aria-live="polite">
+          <div class="summary-cell"><strong id="totalInput">—</strong><span>Original total</span></div>
+          <div class="summary-cell"><strong id="totalOutput">—</strong><span>Output total</span></div>
+          <div class="summary-cell"><strong id="totalSaved">—</strong><span>Space change</span></div>
+        </div>
+        <div class="action-buttons"><button class="button button-secondary" type="button" id="downloadAllBtn" disabled>Download all (.zip)</button><button class="button button-primary" type="button" id="compressBtn">Compress images <span aria-hidden="true">↗</span></button></div>
+      </div>
+      <div class="progress-wrap hidden" id="progressWrap" aria-live="polite"><div class="progress-head"><span id="progressLabel">Preparing images…</span><span id="progressCount">0 / 0</span></div><div class="progress-track"><div class="progress-bar" id="progressBar"></div></div></div>
+    </section>
+  </main>
+
+  <footer class="footnote"><div>© PixelPress · Zero Backend Build, Episode 01 <span class="tag" style="margin-left:7px">Prototype</span></div><div class="foot-links"><button type="button" id="footerHowBtn">How it works</button><button type="button" id="footerPrivacyBtn">Privacy note</button><span>Designed for desktop & mobile</span></div></footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal-backdrop hidden" id="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><h2 id="modalTitle">How PixelPress works</h2><button class="modal-close" type="button" id="modalClose" aria-label="Close dialog">×</button></div><div id="modalContent"></div><div style="display:flex;justify-content:flex-end;margin-top:20px"><button type="button" class="button button-primary" id="modalDone">Got it</button></div></section></div>
+<input class="hidden" id="fileInput" type="file" multiple accept="image/jpeg,image/png,image/webp">
+<script>
+(() => {
+  'use strict';
+  const MAX_FILES = 10;
+  const MAX_FILE_BYTES = 20 * 1024 * 1024;
+  const MAX_DECODED_PIXELS = 30_000_000;
+  const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  const state = { files: [], selectedId: null, processing: false, completedRun: false, toastTimer: null, forcedTheme: null };
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    fileInput: $('fileInput'), dropzone: $('dropzone'), chooseBtn: $('chooseBtn'), addMoreBtn: $('addMoreBtn'), clearBtn: $('clearBtn'),
+    uploadCard: $('uploadCard'), workspace: $('workspace'), intro: $('intro'), queueList: $('queueList'), queueCount: $('queueCount'), workspaceDesc: $('workspaceDesc'),
+    originalStage: $('originalStage'), outputStage: $('outputStage'), originalMeta: $('originalMeta'), outputMeta: $('outputMeta'), previewFormat: $('previewFormat'), previewMessage: $('previewMessage'), previewSavings: $('previewSavings'),
+    formatSelect: $('formatSelect'), qualityRange: $('qualityRange'), qualityValue: $('qualityValue'), qualityField: $('qualityField'), resizeToggle: $('resizeToggle'), resizeWrap: $('resizeWrap'), maxDimension: $('maxDimension'), matteField: $('matteField'), matteColor: $('matteColor'),
+    totalInput: $('totalInput'), totalOutput: $('totalOutput'), totalSaved: $('totalSaved'), compressBtn: $('compressBtn'), downloadAllBtn: $('downloadAllBtn'), progressWrap: $('progressWrap'), progressLabel: $('progressLabel'), progressCount: $('progressCount'), progressBar: $('progressBar'),
+    toast: $('toast'), modalBackdrop: $('modalBackdrop'), modalTitle: $('modalTitle'), modalContent: $('modalContent')
+  };
+
+  function uid() { return `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return '—';
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 2)} ${units[index]}`;
+  }
+  function extensionFor(type) { return ({'image/webp':'webp','image/jpeg':'jpg','image/png':'png'})[type] || 'img'; }
+  function safeName(name) { return name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 120) || 'image'; }
+  function selected() { return state.files.find(item => item.id === state.selectedId) || null; }
+  function toast(message) {
+    els.toast.textContent = message;
+    els.toast.classList.add('show');
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => els.toast.classList.remove('show'), 3800);
+  }
+  function emptyStage(title, description) {
+    const div = document.createElement('div'); div.className = 'empty-preview';
+    const strong = document.createElement('strong'); strong.textContent = title;
+    const span = document.createElement('span'); span.textContent = description;
+    div.append(strong, span); return div;
+  }
+  function objectPreview(stage, src, alt) {
+    stage.replaceChildren();
+    const img = document.createElement('img'); img.src = src; img.alt = alt; img.decoding = 'async';
+    stage.appendChild(img);
+  }
+  function markStale() {
+    if (!state.files.length) return;
+    if (state.processing) return;
+    state.completedRun = false;
+    els.progressWrap.classList.add('hidden');
+    state.files.forEach(item => {
+      if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
+      item.resultUrl = null; item.resultBlob = null; item.status = 'ready'; item.error = '';
+    });
+    renderAll();
+  }
+  function updateSettingsUI() {
+    const type = els.formatSelect.value;
+    const lossy = type === 'image/jpeg' || type === 'image/webp';
+    els.qualityField.classList.toggle('hidden', !lossy);
+    els.matteField.classList.toggle('hidden', type !== 'image/jpeg');
+    els.resizeWrap.classList.toggle('hidden', !els.resizeToggle.checked);
+    els.previewFormat.textContent = extensionFor(type).toUpperCase();
+    els.qualityValue.textContent = `${els.qualityRange.value}%`;
+  }
+  function renderQueue() {
+    els.queueList.replaceChildren();
+    state.files.forEach(item => {
+      const row = document.createElement('div');
+      row.className = `queue-item${item.id === state.selectedId ? ' active' : ''}`;
+      const select = document.createElement('button');
+      select.type = 'button'; select.className = 'queue-select';
+      select.setAttribute('aria-pressed', item.id === state.selectedId ? 'true' : 'false');
+      select.setAttribute('aria-label', `Select ${item.file.name}`); select.disabled = state.processing;
+      const img = document.createElement('img'); img.className = 'queue-thumb'; img.src = item.previewUrl; img.alt = '';
+      const meta = document.createElement('span'); meta.className = 'queue-meta';
+      const name = document.createElement('span'); name.className = 'queue-name'; name.textContent = item.file.name; name.title = item.file.name;
+      const size = document.createElement('span'); size.className = 'queue-size'; size.textContent = formatBytes(item.file.size);
+      const status = document.createElement('span'); status.className = `queue-status ${item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : ''}`;
+      status.textContent = item.status === 'done' ? `${formatBytes(item.resultBlob.size)} · ready` : item.status === 'processing' ? 'Processing…' : item.status === 'error' ? 'Could not process' : 'Ready to compress';
+      meta.append(name, size, status);
+      select.append(img, meta);
+      select.addEventListener('click', () => { state.selectedId = item.id; renderAll(); });
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'icon-button'; remove.title = 'Remove image'; remove.setAttribute('aria-label', `Remove ${item.file.name}`); remove.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+      remove.disabled = state.processing;
+      remove.addEventListener('click', () => removeFile(item.id));
+      row.append(select, remove); els.queueList.appendChild(row);
+    });
+    els.queueCount.textContent = `${state.files.length} ${state.files.length === 1 ? 'file' : 'files'}`;
+  }
+  function renderPreview() {
+    const item = selected();
+    if (!item) {
+      els.originalStage.replaceChildren(emptyStage('Choose an image', 'The original preview appears here.'));
+      els.outputStage.replaceChildren(emptyStage('Your result', 'Run compression to see the output.'));
+      els.originalMeta.textContent = '—'; els.outputMeta.textContent = 'Not ready'; els.previewMessage.textContent = 'Select a file in the queue to inspect it.'; els.previewSavings.textContent = '';
+      return;
+    }
+    objectPreview(els.originalStage, item.previewUrl, `Original image ${item.file.name}`);
+    els.originalMeta.textContent = `${item.width} × ${item.height} · ${formatBytes(item.file.size)}`;
+    if (item.resultUrl && item.resultBlob) {
+      objectPreview(els.outputStage, item.resultUrl, `Compressed output ${item.outputName}`);
+      els.outputMeta.textContent = `${item.outWidth} × ${item.outHeight} · ${formatBytes(item.resultBlob.size)}`;
+      const delta = item.file.size - item.resultBlob.size;
+      const pct = item.file.size ? Math.round(Math.abs(delta) / item.file.size * 100) : 0;
+      if (delta > 0) { els.previewSavings.textContent = `${pct}% smaller`; els.previewSavings.className = 'result-chip'; els.previewMessage.textContent = 'Compression complete. Compare details before downloading.'; }
+      else if (delta < 0) { els.previewSavings.textContent = `${pct}% larger`; els.previewSavings.className = 'tag'; els.previewMessage.textContent = 'Output is larger than the original. Try another format or quality.'; }
+      else { els.previewSavings.textContent = 'Same size'; els.previewSavings.className = 'tag'; els.previewMessage.textContent = 'The output size is unchanged.'; }
+    } else {
+      els.outputStage.replaceChildren(emptyStage(item.status === 'error' ? 'Output unavailable' : 'Ready when you are', item.status === 'error' ? item.error : 'Run compression to see the result.'));
+      els.outputMeta.textContent = item.status === 'error' ? 'Error' : 'Not ready';
+      els.previewSavings.textContent = '';
+      els.previewMessage.textContent = item.status === 'error' ? item.error : 'Settings apply to the next compression run.';
+    }
+    els.compressBtn.disabled = state.processing || !state.files.length;
+    els.compressBtn.innerHTML = state.processing ? 'Processing…' : `${state.completedRun ? 'Re-compress' : 'Compress'} ${state.files.length} ${state.files.length === 1 ? 'image' : 'images'} <span aria-hidden="true">↗</span>`;
+  }
+  function renderTotals() {
+    const originals = state.files.reduce((sum, item) => sum + item.file.size, 0);
+    const processed = state.files.filter(item => item.resultBlob);
+    const outputs = processed.reduce((sum, item) => sum + item.resultBlob.size, 0);
+    els.totalInput.textContent = formatBytes(originals);
+    els.totalOutput.textContent = processed.length === state.files.length && state.files.length ? formatBytes(outputs) : '—';
+    if (processed.length === state.files.length && state.files.length) {
+      const delta = originals - outputs;
+      const percent = originals ? Math.round(Math.abs(delta) / originals * 100) : 0;
+      els.totalSaved.textContent = delta > 0 ? `${percent}% smaller` : delta < 0 ? `${percent}% larger` : 'No change';
+    } else els.totalSaved.textContent = '—';
+    els.downloadAllBtn.disabled = !state.files.length || processed.length !== state.files.length || state.files.some(item => item.status === 'error') || state.processing;
+  }
+  function renderAll() {
+    const hasFiles = state.files.length > 0;
+    els.workspace.classList.toggle('hidden', !hasFiles);
+    els.uploadCard.classList.toggle('hidden', hasFiles);
+    els.intro.classList.toggle('hidden', hasFiles);
+    if (hasFiles) {
+      renderQueue(); renderPreview(); renderTotals(); updateSettingsUI();
+      els.workspaceDesc.textContent = `${state.files.length} file${state.files.length === 1 ? '' : 's'} selected · Change settings any time before running again.`;
+    }
+  }
+  function revokeItem(item) {
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
+  }
+  function removeFile(id) {
+    if (state.processing) { toast('Wait for the current batch to finish before removing files.'); return; }
+    const index = state.files.findIndex(item => item.id === id);
+    if (index < 0) return;
+    revokeItem(state.files[index]); state.files.splice(index, 1);
+    if (state.selectedId === id) state.selectedId = state.files[Math.max(0, index - 1)]?.id || state.files[0]?.id || null;
+    state.completedRun = state.files.length > 0 && state.files.every(item => item.resultBlob);
+    renderAll();
+  }
+  async function addFiles(list) {
+    const incoming = Array.from(list || []);
+    if (!incoming.length) return;
+    if (state.processing) { toast('Wait for the current batch to finish before adding files.'); return; }
+    let added = 0; const errors = [];
+    for (const file of incoming) {
+      if (state.files.length >= MAX_FILES) { errors.push(`Maximum ${MAX_FILES} files per batch.`); break; }
+      if (!ALLOWED_TYPES.has(file.type)) { errors.push(`${file.name}: use JPG, PNG or WebP.`); continue; }
+      if (file.size > MAX_FILE_BYTES) { errors.push(`${file.name}: exceeds the 20 MB limit.`); continue; }
+      if (file.size === 0) { errors.push(`${file.name}: file is empty.`); continue; }
+      const previewUrl = URL.createObjectURL(file);
+      const item = { id: uid(), file, previewUrl, resultUrl: null, resultBlob: null, width: 0, height: 0, outWidth: 0, outHeight: 0, status: 'ready', error: '', outputName: '' };
+      try {
+        const bitmap = await createImageBitmap(file);
+        item.width = bitmap.width; item.height = bitmap.height;
+        const exceedsPixelLimit = item.width * item.height > MAX_DECODED_PIXELS;
+        if (typeof bitmap.close === 'function') bitmap.close();
+        if (exceedsPixelLimit) {
+          URL.revokeObjectURL(previewUrl); errors.push(`${file.name}: exceeds the 30-megapixel prototype limit.`); continue;
+        }
+      } catch {
+        URL.revokeObjectURL(previewUrl); errors.push(`${file.name}: image could not be decoded.`); continue;
+      }
+      state.files.push(item); added++;
+      if (!state.selectedId) state.selectedId = item.id;
+    }
+    if (added) {
+      state.completedRun = false; markStaleOnlyIfResults(); renderAll();
+      if (added === 1) toast('Image added. Check settings, then compress.');
+      else toast(`${added} images added to the queue.`);
+      if (state.files.length) $('workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (errors.length) toast(errors.slice(0, 2).join(' '));
+    els.fileInput.value = '';
+  }
+  function markStaleOnlyIfResults() {
+    els.progressWrap.classList.add('hidden');
+    state.files.forEach(item => {
+      if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
+      item.resultUrl = null; item.resultBlob = null; item.status = 'ready'; item.error = ''; item.outputName = '';
+    });
+  }
+  function canvasBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+      const callback = blob => blob ? resolve(blob) : reject(new Error('The browser could not create an output image.'));
+      if (typeof canvas.toBlob !== 'function') { reject(new Error('This browser does not support image export.')); return; }
+      if (type === 'image/png') canvas.toBlob(callback, type);
+      else canvas.toBlob(callback, type, quality);
+    });
+  }
+  async function processOne(item, outputType, quality, resize, maxEdge, matteColor) {
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(item.file);
+      const inW = bitmap.width, inH = bitmap.height;
+      let scale = 1;
+      if (resize && Math.max(inW, inH) > maxEdge) scale = maxEdge / Math.max(inW, inH);
+      const width = Math.max(1, Math.round(inW * scale));
+      const height = Math.max(1, Math.round(inH * scale));
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d', { alpha: outputType !== 'image/jpeg' });
+      if (!ctx) throw new Error('Canvas is not available in this browser.');
+      if (outputType === 'image/jpeg') { ctx.fillStyle = matteColor; ctx.fillRect(0, 0, width, height); }
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      const blob = await canvasBlob(canvas, outputType, quality / 100);
+      if (blob.type !== outputType) throw new Error(`${extensionFor(outputType).toUpperCase()} export is not supported by this browser. Choose another format.`);
+      return { blob, width, height };
+    } catch (error) {
+      throw new Error(error?.message || 'This image could not be processed.');
+    } finally {
+      if (bitmap && typeof bitmap.close === 'function') bitmap.close();
+    }
+  }
+  async function compressAll() {
+    if (!state.files.length || state.processing) return;
+    const outputType = els.formatSelect.value;
+    const quality = Number(els.qualityRange.value);
+    const resize = els.resizeToggle.checked;
+    const maxEdge = Number(els.maxDimension.value);
+    if (resize && (!Number.isFinite(maxEdge) || maxEdge < 64 || maxEdge > 12000)) { toast('Enter a maximum edge from 64 to 12,000 pixels.'); els.maxDimension.focus(); return; }
+    state.processing = true; state.completedRun = false;
+    [els.formatSelect, els.qualityRange, els.resizeToggle, els.maxDimension, els.matteColor, els.addMoreBtn, els.clearBtn].forEach(control => { control.disabled = true; });
+    state.files.forEach(item => { if (item.resultUrl) URL.revokeObjectURL(item.resultUrl); item.resultUrl = null; item.resultBlob = null; item.status = 'ready'; item.error = ''; });
+    els.progressWrap.classList.remove('hidden'); els.progressBar.style.width = '0%';
+    els.compressBtn.disabled = true; els.downloadAllBtn.disabled = true;
+    let complete = 0;
+    const outputNameCounts = new Map();
+    for (const item of state.files) {
+      item.status = 'processing'; state.selectedId = item.id;
+      els.progressLabel.textContent = `Processing ${item.file.name}`;
+      els.progressCount.textContent = `${complete} / ${state.files.length}`;
+      renderQueue(); renderPreview();
+      try {
+        const output = await processOne(item, outputType, quality, resize, maxEdge, els.matteColor.value);
+        item.resultBlob = output.blob; item.resultUrl = URL.createObjectURL(output.blob); item.outWidth = output.width; item.outHeight = output.height;
+        const baseName = `${safeName(item.file.name)}-pixelpress`;
+        const nameCount = outputNameCounts.get(baseName) || 0;
+        outputNameCounts.set(baseName, nameCount + 1);
+        item.outputName = `${baseName}${nameCount ? `-${nameCount + 1}` : ''}.${extensionFor(outputType)}`;
+        item.status = 'done';
+      } catch (error) {
+        item.status = 'error'; item.error = error.message;
+      }
+      complete++;
+      els.progressBar.style.width = `${Math.round(complete / state.files.length * 100)}%`;
+      els.progressCount.textContent = `${complete} / ${state.files.length}`;
+      renderQueue(); renderPreview(); renderTotals();
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    state.processing = false;
+    [els.formatSelect, els.qualityRange, els.resizeToggle, els.maxDimension, els.matteColor, els.addMoreBtn, els.clearBtn].forEach(control => { control.disabled = false; });
+    state.completedRun = state.files.every(item => item.resultBlob);
+    els.progressLabel.textContent = state.completedRun ? 'Compression complete.' : 'Finished with some files that need attention.';
+    els.compressBtn.disabled = false;
+    renderAll();
+    if (state.completedRun) toast('Compression finished. Compare the result, then download.');
+    else toast('Some images could not be processed. Select an affected file for details.');
+  }
+
+  function crc32(bytes) {
+    let crc = -1;
+    for (let i = 0; i < bytes.length; i++) {
+      crc ^= bytes[i];
+      for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xEDB88320 : 0);
+    }
+    return (crc ^ -1) >>> 0;
+  }
+  function dosDateTime(date) {
+    const year = Math.max(1980, date.getFullYear());
+    return { time: (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2), date: ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate() };
+  }
+  async function buildZip(entries) {
+    const encoder = new TextEncoder(); const localChunks = []; const centralChunks = []; let offset = 0;
+    const dt = dosDateTime(new Date());
+    for (const entry of entries) {
+      const name = encoder.encode(entry.name); const data = new Uint8Array(await entry.blob.arrayBuffer()); const crc = crc32(data);
+      const local = new Uint8Array(30 + name.length); const lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, 0x0800, true); lv.setUint16(8, 0, true); lv.setUint16(10, dt.time, true); lv.setUint16(12, dt.date, true); lv.setUint32(14, crc, true); lv.setUint32(18, data.length, true); lv.setUint32(22, data.length, true); lv.setUint16(26, name.length, true); lv.setUint16(28, 0, true); local.set(name, 30);
+      localChunks.push(local, data);
+      const central = new Uint8Array(46 + name.length); const cv = new DataView(central.buffer);
+      cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true); cv.setUint16(12, dt.time, true); cv.setUint16(14, dt.date, true); cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true); cv.setUint16(28, name.length, true); cv.setUint16(30, 0, true); cv.setUint16(32, 0, true); cv.setUint16(34, 0, true); cv.setUint16(36, 0, true); cv.setUint32(38, 0, true); cv.setUint32(42, offset, true); central.set(name, 46);
+      centralChunks.push(central); offset += local.length + data.length;
+    }
+    const centralSize = centralChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const end = new Uint8Array(22); const ev = new DataView(end.buffer); ev.setUint32(0, 0x06054b50, true); ev.setUint16(4, 0, true); ev.setUint16(6, 0, true); ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true); ev.setUint32(12, centralSize, true); ev.setUint32(16, offset, true); ev.setUint16(20, 0, true);
+    return new Blob([...localChunks, ...centralChunks, end], { type: 'application/zip' });
+  }
+  async function downloadAll() {
+    const entries = state.files.filter(item => item.resultBlob).map(item => ({ name: item.outputName, blob: item.resultBlob }));
+    if (!entries.length || entries.length !== state.files.length) return;
+    try {
+      els.downloadAllBtn.disabled = true; els.downloadAllBtn.textContent = 'Preparing ZIP…';
+      const zip = await buildZip(entries); const url = URL.createObjectURL(zip);
+      const a = document.createElement('a'); a.href = url; a.download = 'pixelpress-compressed-images.zip'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 15000);
+      toast(`ZIP ready with ${entries.length} compressed image${entries.length === 1 ? '' : 's'}.`);
+    } catch (error) { toast(`Could not create ZIP: ${error.message}`); }
+    finally { els.downloadAllBtn.textContent = 'Download all (.zip)'; renderTotals(); }
+  }
+  function downloadSingle(item) {
+    if (!item?.resultBlob) return;
+    const a = document.createElement('a'); a.href = item.resultUrl; a.download = item.outputName; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function openModal(kind) {
+    if (kind === 'privacy') {
+      els.modalTitle.textContent = 'Your files stay in this tab.';
+      els.modalContent.innerHTML = '<p>This prototype runs image decoding and encoding in your browser. Selected image bytes are not sent to a server, and this page does not load analytics or third-party scripts.</p><ul><li>Images are handled locally with browser image APIs.</li><li>Clearing the queue releases preview and result object URLs.</li><li>Browser image encoders may alter metadata and may produce a larger file in some cases.</li><li>For a production release, verify this claim with a network audit and document any static hosting or dependency requests.</li></ul><span class="tag">No backend · No database · No API</span>';
+    } else {
+      els.modalTitle.textContent = 'How PixelPress works';
+      els.modalContent.innerHTML = '<p>The workflow is intentionally short: choose images, choose an output, compare, download.</p><ul><li><strong>1. Add files:</strong> select JPG, PNG or WebP images (up to 10 files, 20 MB each in this prototype).</li><li><strong>2. Choose output:</strong> WebP or JPEG quality is adjustable. PNG export is lossless through the native browser encoder; size savings are not guaranteed.</li><li><strong>3. Inspect & download:</strong> compare original and result, then download one image or a local ZIP of the batch.</li></ul><p>Important: this is a browser-native UX prototype, not yet the final high-efficiency codec engine. Production-grade PNG optimization and consistent cross-browser compression require dedicated local codecs and additional testing.</p>';
+    }
+    els.modalBackdrop.classList.remove('hidden'); $('modalClose').focus();
+  }
+  function closeModal() { els.modalBackdrop.classList.add('hidden'); }
+
+  els.chooseBtn.addEventListener('click', (event) => { event.stopPropagation(); els.fileInput.click(); });
+  els.dropzone.addEventListener('click', (event) => { if (event.target.closest('button')) return; els.fileInput.click(); });
+  els.dropzone.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); els.fileInput.click(); } });
+  els.fileInput.addEventListener('change', () => addFiles(els.fileInput.files));
+  ['dragenter','dragover'].forEach(type => els.dropzone.addEventListener(type, event => { event.preventDefault(); els.dropzone.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(type => els.dropzone.addEventListener(type, event => { event.preventDefault(); els.dropzone.classList.remove('dragover'); }));
+  els.dropzone.addEventListener('drop', event => addFiles(event.dataTransfer?.files));
+  els.addMoreBtn.addEventListener('click', () => els.fileInput.click());
+  els.clearBtn.addEventListener('click', () => {
+    if (state.processing) { toast('Wait for the current batch to finish before clearing files.'); return; }
+    state.files.forEach(revokeItem); state.files = []; state.selectedId = null; state.completedRun = false; els.progressWrap.classList.add('hidden'); renderAll(); $('uploadCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  els.formatSelect.addEventListener('change', () => { updateSettingsUI(); markStale(); });
+  els.qualityRange.addEventListener('input', () => { els.qualityValue.textContent = `${els.qualityRange.value}%`; });
+  els.qualityRange.addEventListener('change', markStale);
+  els.resizeToggle.addEventListener('change', () => { updateSettingsUI(); markStale(); });
+  els.maxDimension.addEventListener('change', markStale);
+  els.matteColor.addEventListener('change', markStale);
+  els.compressBtn.addEventListener('click', compressAll);
+  els.downloadAllBtn.addEventListener('click', downloadAll);
+  $('privacyBtn').addEventListener('click', () => openModal('privacy'));
+  $('footerPrivacyBtn').addEventListener('click', () => openModal('privacy'));
+  $('howBtn').addEventListener('click', () => openModal('how'));
+  $('footerHowBtn').addEventListener('click', () => openModal('how'));
+  $('modalClose').addEventListener('click', closeModal); $('modalDone').addEventListener('click', closeModal);
+  els.modalBackdrop.addEventListener('click', event => { if (event.target === els.modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+  $('themeBtn').addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    $('themeBtn').textContent = dark ? '☼' : '◐';
+  });
+  updateSettingsUI();
+})();
+</script>
+</body>
+</html>

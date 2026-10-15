@@ -1,0 +1,15 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    target: 'es2022',
+    outDir: 'dist',
+    assetsInlineLimit: 4096,
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+  },
+} as any);
